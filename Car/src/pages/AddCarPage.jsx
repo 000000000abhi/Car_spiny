@@ -1,4 +1,3 @@
-// src/pages/AddCarPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -13,31 +12,53 @@ export default function AddCarPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 10); // Limit to 10 files
+    const promises = files.map((file) => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve({ data: reader.result.split(',')[1], contentType: file.type });
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    });
+
+    Promise.all(promises)
+      .then((base64Images) => setImages(base64Images))
+      .catch(() => setError('Error reading files. Please try again.'));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('carType', carType);
-    formData.append('company', company);
-    formData.append('dealer', dealer);
-    images.forEach((image, index) => {
-      formData.append(`image${index}`, image);
-    });
+
+    const carData = {
+      title,
+      description,
+      carType,
+      company,
+      dealer,
+      images, // Pass the Base64 encoded images array, which can be empty
+    };
 
     try {
-      const response = await fetch('/api/cars', {
+      //console.log(JSON.stringify(carData));
+      const response = await fetch("http://localhost:5000/api/cars", {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify(carData),
       });
+
       if (response.ok) {
         navigate('/dashboard');
       } else {
         const data = await response.json();
         setError(data.message || 'Failed to add car');
       }
-    } catch (err) {
+    } catch {
       setError('An error occurred. Please try again.');
     }
   };
@@ -55,9 +76,7 @@ export default function AddCarPage() {
           {error && <p className="text-red-500 text-center mb-4">{error}</p>}
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="title" className="text-sm font-medium text-gray-700 block mb-2">
-                Title
-              </label>
+              <label htmlFor="title" className="text-sm font-medium text-gray-700 block mb-2">Title</label>
               <input
                 type="text"
                 id="title"
@@ -68,9 +87,7 @@ export default function AddCarPage() {
               />
             </div>
             <div>
-              <label htmlFor="description" className="text-sm font-medium text-gray-700 block mb-2">
-                Description
-              </label>
+              <label htmlFor="description" className="text-sm font-medium text-gray-700 block mb-2">Description</label>
               <textarea
                 id="description"
                 value={description}
@@ -81,23 +98,18 @@ export default function AddCarPage() {
               />
             </div>
             <div>
-              <label htmlFor="images" className="text-sm font-medium text-gray-700 block mb-2">
-                Images (up to 10)
-              </label>
+              <label htmlFor="images" className="text-sm font-medium text-gray-700 block mb-2">Images (up to 10)</label>
               <input
                 type="file"
                 id="images"
-                onChange={(e) => setImages(Array.from(e.target.files || []).slice(0, 10))}
+                onChange={handleImageChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 multiple
                 accept="image/*"
-                required
               />
             </div>
             <div>
-              <label htmlFor="carType" className="text-sm font-medium text-gray-700 block mb-2">
-                Car Type
-              </label>
+              <label htmlFor="carType" className="text-sm font-medium text-gray-700 block mb-2">Car Type</label>
               <input
                 type="text"
                 id="carType"
@@ -108,9 +120,7 @@ export default function AddCarPage() {
               />
             </div>
             <div>
-              <label htmlFor="company" className="text-sm font-medium text-gray-700 block mb-2">
-                Company
-              </label>
+              <label htmlFor="company" className="text-sm font-medium text-gray-700 block mb-2">Company</label>
               <input
                 type="text"
                 id="company"
@@ -121,9 +131,7 @@ export default function AddCarPage() {
               />
             </div>
             <div>
-              <label htmlFor="dealer" className="text-sm font-medium text-gray-700 block mb-2">
-                Dealer
-              </label>
+              <label htmlFor="dealer" className="text-sm font-medium text-gray-700 block mb-2">Dealer</label>
               <input
                 type="text"
                 id="dealer"

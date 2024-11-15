@@ -1,12 +1,9 @@
 // src/pages/DashboardPage.js
 import { Swiper, SwiperSlide } from 'swiper/react';
-// src/pages/DashboardPage.js
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-
-// Other imports remain the same
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -26,8 +23,14 @@ export default function DashboardPage() {
   }, []);
 
   const fetchCars = async () => {
+    setLoading(true);
+    setError('');
     try {
-      const response = await fetch('/api/cars');
+      const token = localStorage.getItem('token');
+      const response = await fetch("http://localhost:5000/api/cars", {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
       if (response.ok) {
         const data = await response.json();
         setCars(data);
@@ -54,13 +57,17 @@ export default function DashboardPage() {
   };
 
   const filteredCars = cars
-    .filter(car =>
-      car.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.carType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      car.dealer.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter((car) => {
+      const searchMatch = searchTerm
+        ? car.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          car.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          car.carType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          car.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          car.dealer.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+      const filterMatch = filterOption ? car.carType === filterOption : true;
+      return searchMatch && filterMatch;
+    })
     .sort((a, b) => {
       if (sortOption === 'company') return a.company.localeCompare(b.company);
       if (sortOption === 'carType') return a.carType.localeCompare(b.carType);
@@ -90,7 +97,7 @@ export default function DashboardPage() {
                 value={filterOption}
                 onChange={(e) => setFilterOption(e.target.value)}
               >
-                <option value="">Filter by</option>
+                <option value="">Filter by Car Type</option>
                 <option value="SUV">SUV</option>
                 <option value="Sedan">Sedan</option>
               </select>

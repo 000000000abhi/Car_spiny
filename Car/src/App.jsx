@@ -8,8 +8,7 @@ import AddCarPage from './pages/AddCarPage';
 import CarDetailPage from './pages/CarDetailPage';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = React.useState(false);
-
+  const [isAuthenticated, setIsAuthenticated] = React.useState(true);
   return (
     <Router>
       <Routes>
